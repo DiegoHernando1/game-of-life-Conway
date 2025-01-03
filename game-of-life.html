@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Juego de la Vida</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            cursor: pointer;
+        }
+        button {
+            margin: 5px;
+            padding: 10px;
+        }
+        #rules {
+            margin-top: 20px;
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 600px;
+        }
+        #rules h2 {
+            margin-bottom: 10px;
+        }
+        .pattern-image {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Juego de la Vida</h1>
+    <canvas id="gameCanvas" width="500" height="500"></canvas>
+    <div>
+        <button id="playPauseButton">Play</button>
+        <button id="resetButton">Reset</button>
+    </div>
+
+    <!-- Explicación de las reglas -->
+    <div id="rules">
+        <h2>¿Qué es el Juego de la Vida?</h2>
+        <p>El Juego de la Vida es un autómata celular diseñado por el matemático John Conway en 1970. Es un sistema que evoluciona basado en reglas simples, y depende únicamente del estado inicial y las interacciones entre las células.</p>
+        <h2>Reglas del juego:</h2>
+        <ul>
+            <li>El juego ocurre en una cuadrícula donde cada celda puede estar <strong>viva</strong> (negra) o <strong>muerta</strong> (blanca).</li>
+            <li>Las células evolucionan de una generación a la siguiente según estas reglas:
+                <ul>
+                    <li>Una célula viva con menos de 2 vecinos vivos muere por <strong>soledad</strong>.</li>
+                    <li>Una célula viva con 2 o 3 vecinos vivos <strong>sobrevive</strong>.</li>
+                    <li>Una célula viva con más de 3 vecinos vivos muere por <strong>superpoblación</strong>.</li>
+                    <li>Una célula muerta con exactamente 3 vecinos vivos se convierte en una célula <strong>viva</strong> por <strong>reproducción</strong>.</li>
+                </ul>
+            </li>
+        </ul>
+        <h2>Cómo jugar:</h2>
+        <p>
+            - Haz clic en las celdas de la cuadrícula para activarlas o desactivarlas.<br>
+            - Pulsa el botón <strong>Play</strong> para iniciar la simulación.<br>
+            - Pulsa el botón <strong>Reset</strong> para limpiar el tablero y empezar desde cero.
+        </p>
+        <h2>Patrones!</h2>
+        <p>Existe un gran número de resultados y patrones posibles, que crean figuras complejas y desaparecen o que oscilan indefinidamente</p>
+        
+        <!-- Imagen de ejemplo después del apartado de Patrones -->
+        <img src="https://via.placeholder.com/600x300?text=Ejemplo+de+Patrón" alt="Ejemplo de Patrón" class="pattern-image">
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const playPauseButton = document.getElementById("playPauseButton");
+        const resetButton = document.getElementById("resetButton");
+
+        const rows = 50, cols = 50;
+        const cellSize = canvas.width / cols;
+        let grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+        let isPlaying = false;
+        let intervalId;
+
+        // Dibuja el tablero
+        function drawGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    ctx.fillStyle = grid[row][col] ? "black" : "white";
+                    ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+                    ctx.strokeStyle = "gray";
+                    ctx.strokeRect(col * cellSize, row * cellSize, cellSize, cellSize);
+                }
+            }
+        }
+
+        // Actualiza el tablero según las reglas del juego
+        function updateGrid() {
+            let newGrid = grid.map(arr => [...arr]);
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const neighbors = [
+                        grid[row - 1]?.[col - 1], grid[row - 1]?.[col], grid[row - 1]?.[col + 1],
+                        grid[row]?.[col - 1],                      grid[row]?.[col + 1],
+                        grid[row + 1]?.[col - 1], grid[row + 1]?.[col], grid[row + 1]?.[col + 1]
+                    ].filter(Boolean).reduce((a, b) => a + b, 0);
+
+                    newGrid[row][col] = (grid[row][col] && (neighbors === 2 || neighbors === 3)) || (!grid[row][col] && neighbors === 3) ? 1 : 0;
+                }
+            }
+            grid = newGrid;
+        }
+
+        // Detecta clics en el canvas y activa/desactiva células
+        canvas.addEventListener("click", (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const col = Math.floor(x / cellSize);
+            const row = Math.floor(y / cellSize);
+            grid[row][col] = grid[row][col] ? 0 : 1; // Alternar entre viva y muerta
+            drawGrid();
+        });
+
+        // Maneja el botón de Play/Pausa
+        playPauseButton.addEventListener("click", () => {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                playPauseButton.textContent = "Pause";
+                intervalId = setInterval(() => {
+                    updateGrid();
+                    drawGrid();
+                }, 100);
+            } else {
+                playPauseButton.textContent = "Play";
+                clearInterval(intervalId);
+            }
+        });
+
+        // Maneja el botón de Reset
+        resetButton.addEventListener("click", () => {
+            grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+            drawGrid();
+            if (isPlaying) {
+                isPlaying = false;
+                playPauseButton.textContent = "Play";
+                clearInterval(intervalId);
+            }
+        });
+
+        // Dibuja el tablero inicial
+        drawGrid();
+    </script>
+</body>
+</html>
